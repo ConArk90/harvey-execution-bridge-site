@@ -1,0 +1,30 @@
+name: Verify Harvey Domain
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-domain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify DNS and site
+        shell: bash
+        run: |
+          set -euo pipefail
+          domain="harveyhands.abrdns.com"
+          expected=(185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153)
+          mapfile -t actual < <(dig +short A "$domain" | sort)
+          printf 'A records:\n%s\n' "${actual[*]}"
+          for ip in "${expected[@]}"; do
+            printf '%s\n' "${actual[@]}" | grep -Fx "$ip"
+          done
+          txt="$(dig +short TXT "$domain" | tr -d '\"')"
+          echo "$txt" | grep -F 'google-site-verification=iVKIF8mgTVNzye9H-gTormbTxnaH1q3D1LkhLS9DltI'
+          echo 'HTTP:'
+          curl -I --max-time 20 "http://$domain/"
+          echo 'HTTPS:'
+          curl -I --max-time 20 "https://$domain/"
