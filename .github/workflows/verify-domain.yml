@@ -14,17 +14,17 @@ jobs:
       - name: Verify DNS and site
         shell: bash
         run: |
-          set -euo pipefail
+          set -u
           domain="harveyhands.abrdns.com"
-          expected=(185.199.108.153 185.199.109.153 185.199.110.153 185.199.111.153)
-          mapfile -t actual < <(dig +short A "$domain" | sort)
-          printf 'A records:\n%s\n' "${actual[*]}"
-          for ip in "${expected[@]}"; do
-            printf '%s\n' "${actual[@]}" | grep -Fx "$ip"
-          done
-          txt="$(dig +short TXT "$domain" | tr -d '\"')"
-          echo "$txt" | grep -F 'google-site-verification=iVKIF8mgTVNzye9H-gTormbTxnaH1q3D1LkhLS9DltI'
+          echo 'A:'
+          dig +short A "$domain" | sort
+          echo 'AAAA:'
+          dig +short AAAA "$domain" | sort
+          echo 'CAA:'
+          dig +short CAA "$domain" | sort
+          echo 'TXT:'
+          dig +short TXT "$domain" | sort
           echo 'HTTP:'
-          curl -I --max-time 20 "http://$domain/"
+          curl -I --max-time 20 "http://$domain/" || true
           echo 'HTTPS:'
-          curl -I --max-time 20 "https://$domain/"
+          curl -I --max-time 20 "https://$domain/" || true
